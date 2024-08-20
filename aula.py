@@ -14,18 +14,14 @@ def perna():
 
 @app.route("/cadastrar_aluno", methods=["POST"])
 def cadastrar_aluno():
-    entrada_dados = {
-        "nome": "Tiago",
-        "idade": 37,
-        "peso": 80.5
-    }
+    entrada_dados = request.json
     alunos.append(entrada_dados)
     resp = "alunos cadastrado com sucesso!"
-
-    
     return resp, 201
+
 @app.route("/lista_alunos", methods=["GET"])
 def lista_aluno():
-    return f"A lista de alunos registrados é {alunos}" if len(alunos) >= 1 else "Ainda não temos alunos registrados"
+    resp = {"alunos": alunos}
+    return resp if len(alunos) >= 1 else "Ainda não temos alunos registrados"
 if __name__ == "__main__":
     app.run(debug=True)
