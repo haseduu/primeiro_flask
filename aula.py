@@ -173,12 +173,16 @@ def lista_matriculas():
     return resp if len(matriculas) >= 1 else "Ainda não temos matriculas registradas"
 @app.route("/deletar_matricula", methods=["POST"])
 def deletar_matriculas():
+    matricula_encontrada = False
     for matricula in matriculas:
+        matricula_encontrada = True
         if matricula['ID aluno'] == request.json['ID aluno']:
             i = matriculas.index(matricula)
             matriculas.pop(i)
-            return "Matricula deletada com sucesso", 201
-    return "Matricula nao encontrada", 404
+    if not matricula_encontrada:
+         return "Matricula nao encontrada", 404
+    return "Matricula(s) deletada(s) com sucesso", 201
+    
 @app.route("/buscar_matriculas", methods=["POST"])
 def buscar_matriculas():
     for matricula in matriculas:
