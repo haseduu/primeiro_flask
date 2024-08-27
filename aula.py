@@ -28,7 +28,7 @@ def cadastrar_aluno():
     print(local_id, flush=True)
     entrada_dados['id'] = local_id
     alunos.append(entrada_dados)
-    resp = "aluno cadastrado com sucesso!"
+    resp = f"aluno cadastrado com sucesso! o id é {local_id}"
     local_id += 1
     return resp, 201
 @app.route("/aluno/<int:id>/", methods=["GET"])
@@ -89,7 +89,7 @@ def cadastrar_disciplina():
         return 'Erro ao cadastrar disciplina, faltaram informações', 404
     entrada_dados['id'] = local_id_disciplina
     disciplinas.append(entrada_dados)
-    resp = "disciplina cadastrada com sucesso!"
+    resp = f"disciplina cadastrada com sucesso!, o id é {local_id_disciplina}"
     local_id_disciplina += 1
     return resp, 201
 @app.route("/disciplina/<int:id>/", methods=["GET"])
