@@ -9,11 +9,11 @@ alunos = []
 disciplinas = []
 matriculas = []
 @app.route("/", methods=["GET"])
-def joelho():
-    return "Hello World", 200
+def indes():
+    return "Web Service LVL 2 de Richarlison", 200
 
 @app.route("/teste", methods= ["GET"])
-def perna():
+def teste():
     return "Web Service funcionando", 200
 
 @app.route("/aluno", methods=["POST"])
