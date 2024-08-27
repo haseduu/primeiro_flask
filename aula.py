@@ -9,7 +9,7 @@ matriculas = []
 @app.route("/", methods=["GET"])
 def joelho():
     return "Hello World", 200
-    
+
 @app.route("/teste", methods= ["GET"])
 def perna():
     return "Web Service funcionando", 200
@@ -60,18 +60,18 @@ def editar_aluno():
 @app.route("/deletar_aluno", methods=["POST"])
 def deletar_aluno():
     encontrado = False
+    global alunos
     if not request.json['id']:
         return 'Erro ao deletar aluno, preciso do ID do aluno para alterar informações', 404
-    for aluno in alunos:
-        if aluno['id'] == request.json['id']:
-            encontrado = True
-            i = alunos.index(aluno)
-            alunos.pop(i)
-            nome = aluno['nome']
-            resp = f"Aluno de nome: {nome} deletado com sucesso"
+    len_inicial = len(alunos)
+    alunos = [aluno for aluno in alunos if aluno['id'] != request.json['id']]
+    len_final = len(alunos)
+    
+    if len_final < len_inicial:
+        encontrado = True
     if not encontrado:
-        return "Não encontrei um aluno com esse ID", 404
-    return resp, 201 
+         return "Disciplina nao encontrada", 404
+    return "Disciplna(s) deletada(s) com sucesso", 201
         
 @app.route("/lista_alunos", methods=["GET"])
 def lista_aluno():
@@ -124,20 +124,19 @@ def editar_disciplina():
     return "disciplina editado com sucesso", 201
 @app.route("/deletar_disciplina", methods=["POST"])
 def deletar_disciplina():
+    global disciplinas
     encontrado = False
     if not request.json['id']:
         return 'Erro ao deletar disciplina, preciso do ID do disciplina para alterar informações', 404
-    for disciplina in disciplinas:
-        if disciplina['id'] == request.json['id']:
-            encontrado = True
-            i = disciplinas.index(disciplina)
-            disciplinas.pop(i)
-            nome = disciplina['nome']
-            resp = f"disciplina de nome: {nome} deletado com sucesso"
-    if not encontrado:
-        return "Não encontrei um disciplina com esse ID", 404
-    return resp, 201 
-        
+    len_inicial = len(disciplinas)
+    disciplinas = [disciplina for disciplina in disciplinas if disciplina['id'] != request.json['id']]
+    len_final = len(disciplinas)
+    
+    if len_final < len_inicial:
+        encontrada= True
+    if not encontrada:
+         return "Disciplina nao encontrada", 404
+    return "Disciplna(s) deletada(s) com sucesso", 201
 @app.route("/lista_disciplinas", methods=["GET"])
 def lista_disciplina():
     resp = {"disciplinas": disciplinas}
@@ -162,8 +161,8 @@ def matricular_aluno():
     if not aluno_encontrado or not disciplina_encontrada:
         return "ID fornecido não possui materia ou aluno associado", 404
     matricula = {"ID aluno": id_aluno,
-                 "ID disciplina": id_disciplina,
                  "nome aluno": aluno_nome,
+                 "ID disciplina": id_disciplina,
                  "nome disciplina": disciplina_nome}
     matriculas.append(matricula)
     return f"{matricula} aluno matriculado com sucesso", 201
@@ -173,21 +172,29 @@ def lista_matriculas():
     return resp if len(matriculas) >= 1 else "Ainda não temos matriculas registradas"
 @app.route("/deletar_matricula", methods=["POST"])
 def deletar_matriculas():
+    global matriculas
     matricula_encontrada = False
-    for matricula in matriculas:
-        matricula_encontrada = True
-        if matricula['ID aluno'] == request.json['ID aluno']:
-            i = matriculas.index(matricula)
-            matriculas.pop(i)
+    
+    len_inicial = len(matriculas)
+    matriculas = [matricula for matricula in matriculas if matricula['ID aluno'] != request.json['ID aluno']]
+    len_final = len(matriculas)
+    
+    if len_final < len_inicial:
+        matricula_encontrada= True
     if not matricula_encontrada:
          return "Matricula nao encontrada", 404
     return "Matricula(s) deletada(s) com sucesso", 201
     
 @app.route("/buscar_matriculas", methods=["POST"])
 def buscar_matriculas():
+    resp = []
+    encontrado = False
     for matricula in matriculas:
         if matricula['ID aluno'] == request.json['ID aluno']:
-            return matricula, 201
+            resp.append(matricula)
+            encontrado = True
+    if encontrado:
+        return resp, 201
     return "Nenhuma matricula encontrada com esse ID, cheque se você envio o ID certo", 404 
 if __name__ == "__main__":
     app.run(debug=True)
