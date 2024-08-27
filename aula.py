@@ -30,7 +30,7 @@ def cadastrar_aluno():
     alunos.append(entrada_dados)
     resp = "aluno cadastrado com sucesso!"
     local_id += 1
-    return resp, 201
+    return resp, 200
 @app.route("/aluno/<int:id>/", methods=["GET"])
 def buscar_aluno(id):
     
@@ -56,7 +56,7 @@ def editar_aluno(id):
                 aluno['cpf'] = request.json['cpf']
     if not encontrado:
         return "Não encontrei um aluno com esse ID", 404
-    return "Aluno editado com sucesso", 201
+    return "Aluno editado com sucesso", 200
 @app.route("/aluno/<int:id>/", methods=["DELETE"])
 def deletar_aluno(id):
     encontrado = False
@@ -75,7 +75,7 @@ def deletar_aluno(id):
 @app.route("/aluno", methods=["GET"])
 def lista_aluno():
     resp = {"alunos": alunos}
-    return resp, 200 if len(alunos) >= 1 else "Ainda não temos alunos registrados", 200
+    return resp if len(alunos) >= 1 else "Ainda não temos alunos registrados"
 
 #disciplina
 @app.route("/disciplina", methods=["POST"])
@@ -88,7 +88,7 @@ def cadastrar_disciplina():
     disciplinas.append(entrada_dados)
     resp = "disciplina cadastrada com sucesso!"
     local_id_disciplina += 1
-    return resp, 201
+    return resp, 200
 @app.route("/disciplina/<int:id>/", methods=["GET"])
 def buscar_disciplina(id):
     for disciplina in disciplinas:
@@ -108,7 +108,7 @@ def editar_disciplina(id):
                 disciplina['aulas_semanais'] = request.json['aulas_semanais']
     if not encontrado:
         return "Não encontrei um disciplina com esse ID", 404
-    return "disciplina editado com sucesso", 201
+    return "disciplina editado com sucesso", 200
 @app.route("/disciplina/<int:id>/", methods=["DELETE"])
 def deletar_disciplina(id):
     global disciplinas
@@ -152,7 +152,7 @@ def matricular_aluno():
                  "ID disciplina": id_disciplina,
                  "nome disciplina": disciplina_nome}
     matriculas.append(matricula)
-    return f"{matricula} aluno matriculado com sucesso", 201
+    return f"{matricula} aluno matriculado com sucesso", 200
 @app.route("/matricula", methods=["GET"])
 def lista_matriculas():
     resp = {"matriculas": matriculas}
@@ -172,7 +172,7 @@ def deletar_matriculas(id):
          return "Matricula nao encontrada", 404
     return "Matricula(s) deletada(s) com sucesso", 200
     
-@app.route("/matricula/<int:id>", methods=["POST"])
+@app.route("/matricula/<int:id>", methods=["GET"])
 def buscar_matriculas(id):
     resp = []
     encontrado = False
@@ -181,7 +181,7 @@ def buscar_matriculas(id):
             resp.append(matricula)
             encontrado = True
     if encontrado:
-        return resp, 201
+        return resp, 200
     return "Nenhuma matricula encontrada com esse ID, cheque se você envio o ID certo", 404 
 if __name__ == "__main__":
     app.run(debug=True)
