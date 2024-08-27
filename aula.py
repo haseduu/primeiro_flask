@@ -1,5 +1,7 @@
 from flask import Flask, request
 
+ 
+
 app = Flask(__name__)
 local_id = 1
 local_id_disciplina = 1
@@ -14,7 +16,7 @@ def joelho():
 def perna():
     return "Web Service funcionando", 200
 
-@app.route("/cadastrar_aluno", methods=["POST"])
+@app.route("/aluno", methods=["POST"])
 def cadastrar_aluno():
     global local_id 
     
@@ -29,24 +31,22 @@ def cadastrar_aluno():
     resp = "aluno cadastrado com sucesso!"
     local_id += 1
     return resp, 201
-@app.route("/buscar_aluno", methods=["POST"])
-def buscar_aluno():
-    if not request.json['id']:
-        return 'Erro ao procurar aluno, preciso do ID do aluno para alterar informações', 404
+@app.route("/aluno/<int:id>/", methods=["GET"])
+def buscar_aluno(id):
+    
     for aluno in alunos:
-        if aluno['id'] == request.json['id']:
-            return aluno, 201
+        if aluno['id'] == id:
+            return aluno, 200
     return "Não encontrei um aluno com esse ID", 404
 
-@app.route("/editar_aluno", methods=["POST"])
-def editar_aluno():
+@app.route("/aluno/<int:id>/", methods=["PUT"])
+def editar_aluno(id):
     
     encontrado = False
-    if not request.json['id']:
-        return 'Erro ao editar aluno, preciso do ID do aluno para alterar informações', 404
+    
 
     for aluno in alunos:
-        if aluno['id'] == request.json['id']:
+        if id == aluno['id']:
             encontrado = True
             if 'nome' in request.json:
                 aluno['nome'] = request.json['nome']
@@ -57,26 +57,25 @@ def editar_aluno():
     if not encontrado:
         return "Não encontrei um aluno com esse ID", 404
     return "Aluno editado com sucesso", 201
-@app.route("/deletar_aluno", methods=["POST"])
-def deletar_aluno():
+@app.route("/aluno/<int:id>/", methods=["DELETE"])
+def deletar_aluno(id):
     encontrado = False
     global alunos
-    if not request.json['id']:
-        return 'Erro ao deletar aluno, preciso do ID do aluno para alterar informações', 404
+    
     len_inicial = len(alunos)
-    alunos = [aluno for aluno in alunos if aluno['id'] != request.json['id']]
+    alunos = [aluno for aluno in alunos if aluno['id'] != id]
     len_final = len(alunos)
     
     if len_final < len_inicial:
         encontrado = True
     if not encontrado:
-         return "Disciplina nao encontrada", 404
-    return "Disciplna(s) deletada(s) com sucesso", 201
+         return "Aluno nao encontrado", 404
+    return "Aluno(s) deletado(s) com sucesso", 200
         
-@app.route("/lista_alunos", methods=["GET"])
+@app.route("/aluno", methods=["GET"])
 def lista_aluno():
     resp = {"alunos": alunos}
-    return resp if len(alunos) >= 1 else "Ainda não temos alunos registrados"
+    return resp, 200 if len(alunos) >= 1 else "Ainda não temos alunos registrados", 200
 
 #disciplina
 @app.route("/cadastrar_disciplina", methods=["POST"])
@@ -139,6 +138,7 @@ def deletar_disciplina():
     return "Disciplna(s) deletada(s) com sucesso", 201
 @app.route("/lista_disciplinas", methods=["GET"])
 def lista_disciplina():
+    
     resp = {"disciplinas": disciplinas}
     return resp if len(disciplinas) >= 1 else "Ainda não temos disciplinas registrados"
 
@@ -198,3 +198,5 @@ def buscar_matriculas():
     return "Nenhuma matricula encontrada com esse ID, cheque se você envio o ID certo", 404 
 if __name__ == "__main__":
     app.run(debug=True)
+
+ 
