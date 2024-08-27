@@ -30,7 +30,7 @@ def cadastrar_aluno():
     alunos.append(entrada_dados)
     resp = "aluno cadastrado com sucesso!"
     local_id += 1
-    return resp, 200
+    return resp, 201
 @app.route("/aluno/<int:id>/", methods=["GET"])
 def buscar_aluno(id):
     
@@ -75,7 +75,10 @@ def deletar_aluno(id):
 @app.route("/aluno", methods=["GET"])
 def lista_aluno():
     resp = {"alunos": alunos}
-    return resp if len(alunos) >= 1 else "Ainda não temos alunos registrados"
+    if len(alunos)>=1:
+        return resp,200
+    else:
+        return "Ainda não temos alunos registrados",200
 
 #disciplina
 @app.route("/disciplina", methods=["POST"])
@@ -88,7 +91,7 @@ def cadastrar_disciplina():
     disciplinas.append(entrada_dados)
     resp = "disciplina cadastrada com sucesso!"
     local_id_disciplina += 1
-    return resp, 200
+    return resp, 201
 @app.route("/disciplina/<int:id>/", methods=["GET"])
 def buscar_disciplina(id):
     for disciplina in disciplinas:
@@ -127,7 +130,10 @@ def deletar_disciplina(id):
 def lista_disciplina():
     
     resp = {"disciplinas": disciplinas}
-    return resp if len(disciplinas) >= 1 else "Ainda não temos disciplinas registrados"
+    if len(disciplinas)>=1:
+        return resp,200
+    return "Ainda não temos disciplinas registradas",200
+   
 
 @app.route("/matricula", methods=["POST"])
 def matricular_aluno():
@@ -152,11 +158,13 @@ def matricular_aluno():
                  "ID disciplina": id_disciplina,
                  "nome disciplina": disciplina_nome}
     matriculas.append(matricula)
-    return f"{matricula} aluno matriculado com sucesso", 200
+    return f"{matricula} aluno matriculado com sucesso", 201
 @app.route("/matricula", methods=["GET"])
 def lista_matriculas():
-    resp = {"matriculas": matriculas}
-    return resp if len(matriculas) >= 1 else "Ainda não temos matriculas registradas"
+    resp = {"alunos": matriculas}
+    if len(matriculas)>=1:
+        return resp,200
+    return "Ainda não temos alunos registrados",200
 @app.route("/matricula/<int:id>", methods=["DELETE"])
 def deletar_matriculas(id):
     global matriculas
