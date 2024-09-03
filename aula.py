@@ -1,13 +1,40 @@
 from flask import Flask, request
+import os
+import mysql.connector
+from mysql.connector import Error
+from dotenv import load_dotenv
 
+
+# Carrega as variáveis de ambiente do arquivo .cred (se disponível)
+load_dotenv('.cred')
+
+# Configurações para conexão com o banco de dados usando variáveis de ambiente
+config = {
+    'host': os.getenv('DB_HOST', 'localhost'),  # Obtém o host do banco de dados da variável de ambiente
+    'user': os.getenv('DB_USER'),  # Obtém o usuário do banco de dados da variável de ambiente
+    'password': os.getenv('DB_PASSWORD'),  # Obtém a senha do banco de dados da variável de ambiente
+    'database': os.getenv('DB_NAME', 'db_escola'),  # Obtém o nome do banco de dados da variável de ambiente
+    'port': int(os.getenv('DB_PORT', 3306)),  # Obtém a porta do banco de dados da variável de ambiente
+    'ssl_ca': os.getenv('SSL_CA_PATH')  # Caminho para o certificado SSL
+}
+
+# Função para conectar ao banco de dados
+def connect_db():
+    """Estabelece a conexão com o banco de dados usando as configurações fornecidas."""
+    try:
+        # Tenta estabelecer a conexão com o banco de dados usando mysql-connector-python
+        conn = mysql.connector.connect(**config)
+        if conn.is_connected():
+            return conn
+    except Error as err:
+        # Em caso de erro, imprime a mensagem de erro
+        print(f"Erro: {err}")
+        return None
  
 
 app = Flask(__name__)
-local_id = 1
-local_id_disciplina = 1
-alunos = []
-disciplinas = []
-matriculas = []
+
+
 @app.route("/", methods=["GET"])
 def index():
     return "Web Service LVL 2 de Richarlison", 200
@@ -18,40 +45,104 @@ def teste():
 
 @app.route("/aluno", methods=["POST"])
 def cadastrar_aluno():
-    global local_id 
+    sucess = False
     entrada_dados = request.json
+    nome = entrada_dados['nome']
+    idade = entrada_dados['idade']
+    cpf = entrada_dados['cpf']
     if not bool(entrada_dados['nome']) or not bool(entrada_dados['idade']) or not bool(entrada_dados['cpf']):
         return 'Erro ao cadastrar aluno, faltaram informações', 404
-    print(local_id, flush=True)
-    entrada_dados['id'] = local_id
-    alunos.append(entrada_dados)
-    resp = f"aluno cadastrado com sucesso! o id é {local_id}"
-    local_id += 1
-    return resp, 201
+    conn = connect_db()
+    aluno_id = None
+    if conn and conn.is_connected():
+        try:
+            cursor = conn.cursor()  # Cria um cursor para executar comandos SQL
+            sql = "INSERT INTO tbl_alunos (nome, cpf, idade) VALUES (%s, %s, %s)"  # Comando SQL para inserir um aluno
+            values = (nome, cpf, idade)  # Dados a serem inseridos
 
+            # Executa o comando SQL com os valores fornecidos
+            print(f"Executando SQL: {sql} com valores: {values}")
+            cursor.execute(sql, values)
+            
+            # Confirma a transação no banco de dados
+            conn.commit()
+
+            # Obtém o ID do registro recém-inserido
+            aluno_id = cursor.lastrowid
+            sucess = True
+            
+        except Error as err:
+            # Em caso de erro na inserção, imprime a mensagem de erro
+            print(f"Erro ao inserir aluno: {err}")
+        finally:
+            # Fecha o cursor e a conexão para liberar recursos
+            cursor.close()
+            conn.close()
+    if sucess:
+        return "Aluno cadastrado com sucesso", 201
+    return "Internal error", 
 @app.route("/aluno/<int:id>/", methods=["GET"])
 def buscar_aluno(id):
-    for aluno in alunos:
-        if aluno['id'] == id:
-            return aluno, 200
-    return "Não encontrei um aluno com esse ID", 404
+    conn = connect_db()  # Conecta ao banco de dados
+    if conn:
+        cursor = conn.cursor()  # Cria um cursor para executar comandos SQL
+        sql = "SELECT * FROM tbl_alunos WHERE id = %s"  # Comando SQL para buscar um aluno pelo ID
+
+        try:
+            # Executa o comando SQL com o ID fornecido
+            cursor.execute(sql, (id))
+            # Recupera o resultado da consulta
+            aluno = cursor.fetchone()
+            # Verifica se o aluno foi encontrado e imprime seus detalhes
+            if aluno:
+                d = {"nome": aluno['nome'], "idade":  aluno['idade'], "cpf": aluno['cpf'], "id": aluno['id']}
+                return d
+            else:
+                return "Aluno não encontrado", 404
+        except Error as err:
+            # Em caso de erro na busca, imprime a mensagem de erro
+            print(f"Erro ao buscar aluno: {err}")
+        finally:
+            # Fecha o cursor e a conexão para liberar recursos
+            cursor.close()
+            conn.close()
 
 @app.route("/aluno/<int:id>/", methods=["PUT"])
 def editar_aluno(id):
-    encontrado = False
-    for aluno in alunos:
-        if id == aluno['id']:
-            encontrado = True
-            if 'nome' in request.json:
-                aluno['nome'] = request.json['nome']
-            if 'idade' in request.json:
-                aluno['idade'] = request.json['idade']
-            if 'cpf' in request.json:
-                aluno['cpf'] = request.json['cpf']
-    if not encontrado:
-        return "Não encontrei um aluno com esse ID", 404
-    return "Aluno editado com sucesso", 200
+    erro = False
+    entrada_dados = request.json
+    if not entrada_dados['nome'] or not entrada_dados['idade'] or not entrada_dados['cpf']:
+        return "Json missing arguments or mispelled", 404
+    conn = connect_db()  # Conecta ao banco de dados
+    if conn:
+        cursor = conn.cursor()  # Cria um cursor para executar comandos SQL
+        sql = "UPDATE tbl_alunos SET nome = %s, cpf = %s, idade = %s WHERE id = %s"  # Comando SQL para atualizar o aluno
+        values = (entrada_dados['nome'], entrada_dados['cpf'], entrada_dados['idade'], id)  # Dados a serem atualizados
 
+        try:
+            # Executa o comando SQL com os valores fornecidos
+            cursor.execute(sql, values)
+            # Confirma a transação no banco de dados
+            conn.commit()
+            # Verifica se alguma linha foi afetada (atualizada)
+            if cursor.rowcount:
+                return "Aluno editado com sucesso"
+            else:
+                return "Aluno não encontrado"
+        except Error as err:
+            # Em caso de erro na atualização, imprime a mensagem de erro
+            erro = True
+            errormessage = err
+        finally:
+            # Fecha o cursor e a conexão para liberar recursos
+            cursor.close()
+            conn.close()
+        if erro:
+            return f"Erro: {err}"
+        if cursor.rowcount:
+            return "Aluno editado com sucesso"
+        else:
+            return "Aluno não encontrado"
 @app.route("/aluno/<int:id>/", methods=["DELETE"])
 def deletar_aluno(id):
     encontrado = False
@@ -67,10 +158,34 @@ def deletar_aluno(id):
 
 @app.route("/aluno", methods=["GET"])
 def lista_aluno():
-    resp = {"alunos": alunos}
-    if len(alunos)>=1:
-        return resp,200
-    return "Ainda não temos alunos registrados",200
+    erro = False
+    encontrado = False
+    conn = connect_db()
+    if conn:
+        cursor = conn.cursor()  # Cria um cursor para executar comandos SQL
+        sql = "SELECT * FROM tbl_alunos"  # Comando SQL para selecionar todos os alunos
+        response = []
+        try:
+            # Executa o comando SQL
+            cursor.execute(sql)
+            # Recupera todos os registros da consulta
+            alunos = cursor.fetchall()
+            # Itera sobre os resultados e imprime os detalhes de cada aluno
+            for aluno in alunos:
+                d = {"nome": aluno['nome'], "idade":  aluno['idade'], "cpf": aluno['cpf'], "id": aluno['id']}
+                encontrado = True
+                response.append(d)
+        except Error as err:
+            erro = True
+            errormessage = err
+        finally:
+            # Fecha o cursor e a conexão para liberar recursos
+            cursor.close()
+            conn.close()
+    if erro:
+        return errormessage
+    if encontrado:
+        return response
     
 #disciplina
 @app.route("/disciplina", methods=["POST"])
